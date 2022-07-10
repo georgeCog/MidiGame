@@ -1,29 +1,32 @@
-from midigame.midi.input import MidiUpdater
-from midigame.midi.state import MidiState
-from midigame.midi.actors.chords import Chord
-from midigame.control.actions import presses_key
+from midigame.midi.input import InputInterface
+from midigame.control.triggers.singles import NoteHold, PadTap
+
+import midigame.midi.note_writer as note_writer
+from midigame.midi.note_writer import note, notes, pad
+
+import midigame.control as control
+
 import time
 
-state = MidiState()
-updater = MidiUpdater(state, 1)
 
-presses_key('w',Chord(["C","E","G"])).attatch(state)
-presses_key('a',Chord(["C","E","G","A"])).attatch(state)
-presses_key('d',Chord(["C","E","G","B♭"])).attatch(state)
-#presses_key('d',Chord(["C","E","G","A#"])).attatch(state)
+midi_interface = InputInterface(1)
+control.set_midi_interface(midi_interface)
 
-presses_key('s',Chord(["D","F","A"])).attatch(state)
-presses_key('a',Chord(["D","F","A","B"])).attatch(state)
-presses_key('d',Chord(["D","F","A","C"])).attatch(state)
+note_writer.set_main_channel(0)
+note_writer.set_pad_channel(9)
+note_writer.set_pad_octave(1)
 
+NoteHold(notes("C1","C2")).holds_key('w')
+NoteHold(note("C#2")).holds_key('w')
+
+PadTap(pad(1)).taps_key(' ')                # Dodge roll
+PadTap(pad(5)).taps_key('a')                # Right heavy attack
+PadTap(pad(3)).taps_key('b')                # Right light attack
 
 try:
-    # Just wait for keyboard interrupt,
-    # everything else is handled via the input callback.
     while True:
         time.sleep(1)
 except KeyboardInterrupt:
-    print('')
+    print("\nExiting...")
 finally:
-    print("Exit.")
-    updater.close()
+    midi_interface.close()
